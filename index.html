@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faye Budget Management</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#FDFBF7',
+                            100: '#FAF4E3',
+                            200: '#F2E2B8',
+                            300: '#E7C883',
+                            400: '#DCAB53',
+                            500: '#C59238', // Premium Gold Accent
+                            600: '#A4732A',
+                            700: '#7B531F',
+                            800: '#543615',
+                            900: '#321F0D',
+                        },
+                        dark: {
+                            950: '#0B0B0C', // Deepest Black
+                            900: '#121214', // Jet Black
+                            800: '#1E1E22', // Card Black
+                            700: '#2D2D34', // Border/Hover Gray
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Animasi Kustom */
+        .gold-glow {
+            box-shadow: 0 0 15px rgba(197, 146, 56, 0.2);
+        }
+        .gold-glow-focus:focus {
+            box-shadow: 0 0 12px rgba(197, 146, 56, 0.4);
+            border-color: #C59238;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #F2E2B8 0%, #C59238 50%, #7B531F 100%);
+        }
+        .gold-text-gradient {
+            background: linear-gradient(135deg, #FFF 30%, #E7C883 70%, #C59238 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Hide scrollbar but keep functional */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-dark-950 text-white font-sans antialiased min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Notifikasi Toast Kustom -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-md w-full px-4 sm:px-0"></div>
+
+    <!-- Halaman Login -->
+    <div id="login-screen" class="flex-grow flex items-center justify-center p-4 sm:p-8">
+        <div class="bg-dark-900 border border-gold-500/20 rounded-2xl w-full max-w-md p-8 relative gold-glow overflow-hidden transition-all duration-500">
+            <!-- Dekorasi Elemen Emas -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-gold-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-gold-600/10 rounded-full blur-2xl"></div>
+
+            <!-- Header Login -->
+            <div class="text-center mb-8 relative z-10">
+                <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gold-300 via-gold-500 to-gold-700 rounded-full flex items-center justify-center shadow-lg shadow-gold-500/20">
+                    <i data-lucide="crown" class="w-8 h-8 text-dark-950"></i>
+                </div>
+                <h1 class="font-serif text-3xl font-bold tracking-wide gold-text-gradient">Faye</h1>
+                <p class="text-xs uppercase tracking-[0.2em] text-gold-400 mt-1">Budget Management</p>
+                <div class="w-24 h-[1px] bg-gradient-to-r from-transparent via-gold-500 to-transparent mx-auto mt-4"></div>
+            </div>
+
+            <!-- Form Login -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5 relative z-10">
+                <div>
+                    <label class="block text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Nama Pengguna</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gold-500/60">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" id="username" required placeholder="Masukkan username"
+                            class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Kata Sandi</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gold-500/60">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </span>
+                        <input type="password" id="password" required placeholder="••••••"
+                            class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus">
+                    </div>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-dark-950 font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-gold-500/10 flex items-center justify-center gap-2">
+                    Masuk <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-gray-500 mt-6">Akses Khusus Manajer Keuangan Faye</p>
+        </div>
+    </div>
+
+    <!-- Aplikasi Utama (Hidden secara default) -->
+    <div id="main-app" class="hidden flex-grow flex flex-col">
+        <!-- Header / Navigation -->
+        <header class="bg-dark-900 border-b border-gold-500/15 sticky top-0 z-30 px-4 py-4 sm:px-8">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+                <!-- Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-600 rounded-lg flex items-center justify-center shadow-md">
+                        <i data-lucide="gem" class="w-5 h-5 text-dark-950"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-serif text-xl font-bold tracking-wide gold-text-gradient">Faye Budget</h2>
+                        <p class="text-[10px] uppercase tracking-widest text-gold-400">Exclusive Financial Management</p>
+                    </div>
+                </div>
+
+                <!-- Kontrol Tanggal Interaktif -->
+                <div class="flex items-center bg-dark-800 border border-dark-700 rounded-xl p-1.5 shadow-inner">
+                    <button onclick="adjustDay(-1)" class="p-2 hover:bg-dark-700 hover:text-gold-400 rounded-lg transition" title="Hari Sebelumnya">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <div class="relative px-3 flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-gold-500"></i>
+                        <input type="date" id="app-date-picker" onchange="handleDateChange(event)"
+                            class="bg-transparent text-white font-semibold text-sm focus:outline-none cursor-pointer border-none py-1">
+                    </div>
+
+                    <button onclick="adjustDay(1)" class="p-2 hover:bg-dark-700 hover:text-gold-400 rounded-lg transition" title="Hari Berikutnya">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Profile & Logout -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex flex-col items-end">
+                        <span class="text-sm font-semibold text-gray-200" id="user-display">Finance Fay</span>
+                        <span class="text-[10px] text-gold-400 uppercase tracking-widest">Administrator</span>
+                    </div>
+                    <button onclick="handleLogout()" 
+                        class="px-4 py-2 bg-dark-800 border border-dark-700 hover:border-gold-500/50 hover:bg-dark-700 rounded-xl text-xs font-semibold text-gray-300 hover:text-white transition flex items-center gap-2">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5 text-gold-500"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Area Konten Utama -->
+        <main class="max-w-7xl mx-auto w-full p-4 sm:p-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- SISI KIRI (Grid 12 - 4 Kolom): Ringkasan Keuangan & Atur Budget -->
+            <section class="lg:col-span-4 space-y-6">
+                <!-- Widget Ringkasan Finansial Harian -->
+                <div class="bg-dark-900 border border-gold-500/15 rounded-2xl p-6 relative overflow-hidden gold-glow">
+                    <div class="absolute -top-12 -right-12 w-28 h-28 bg-gold-500/5 rounded-full blur-xl"></div>
+                    <h3 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-4 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4"></i> Ringkasan Hari Ini
+                    </h3>
+                    
+                    <div class="space-y-5">
+                        <!-- Budget Card -->
+                        <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4">
+                            <span class="text-xs text-gray-400 block mb-1">Anggaran Ditetapkan</span>
+                            <span id="summary-budget" class="text-2xl font-bold text-white tracking-wide">Rp 0</span>
+                        </div>
+
+                        <!-- Spent Card -->
+                        <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4">
+                            <span class="text-xs text-gray-400 block mb-1">Total Pengeluaran</span>
+                            <span id="summary-spent" class="text-2xl font-bold text-white tracking-wide">Rp 0</span>
+                        </div>
+
+                        <!-- Remaining Card -->
+                        <div id="remaining-container" class="border rounded-xl p-4 transition-all duration-300">
+                            <span class="text-xs text-gray-400 block mb-1">Sisa Saldo</span>
+                            <span id="summary-remaining" class="text-2xl font-bold tracking-wide">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar Anggaran -->
+                    <div class="mt-6">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>Pemakaian Anggaran</span>
+                            <span id="budget-percentage">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-dark-800 rounded-full overflow-hidden border border-dark-700">
+                            <div id="budget-progress-bar" class="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Atur Budget Harian -->
+                <div class="bg-dark-900 border border-gold-500/10 rounded-2xl p-6">
+                    <h3 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-4 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4"></i> Atur Anggaran Harian
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">Ubah kapasitas pengeluaran harian Anda untuk tanggal yang dipilih di atas.</p>
+                    
+                    <form onsubmit="handleSetBudget(event)" class="space-y-4">
+                        <div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gold-500 font-semibold text-sm">
+                                    Rp
+                                </span>
+                                <input type="number" id="input-budget-amount" required placeholder="Contoh: 500000"
+                                    class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus font-semibold">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-dark-800 hover:bg-gold-500 hover:text-dark-950 border border-gold-500/30 hover:border-transparent text-gold-400 font-semibold py-2.5 px-4 rounded-xl transition duration-300 flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Simpan Anggaran
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SISI KANAN (Grid 12 - 8 Kolom): Input Pengeluaran & Daftar Rincian -->
+            <section class="lg:col-span-8 space-y-6">
+                <!-- Form Tambah Pengeluaran Baru -->
+                <div class="bg-dark-900 border border-gold-500/15 rounded-2xl p-6 relative overflow-hidden">
+                    <h3 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-5 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Pengeluaran Baru
+                    </h3>
+
+                    <form onsubmit="handleAddExpense(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <!-- Nama Pengeluaran -->
+                        <div class="md:col-span-5">
+                            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Detail Penggunaan / Kebutuhan</label>
+                            <input type="text" id="expense-name" required placeholder="Contoh: Makan Siang, Bensin, Tiket Bioskop"
+                                class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 px-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus">
+                        </div>
+
+                        <!-- Nominal -->
+                        <div class="md:col-span-4">
+                            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Jumlah (Rp)</label>
+                            <input type="number" id="expense-amount" required placeholder="Nominal Rp"
+                                class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 px-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus font-semibold">
+                        </div>
+
+                        <!-- Kategori -->
+                        <div class="md:col-span-3">
+                            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Kategori</label>
+                            <select id="expense-category" required
+                                class="w-full bg-dark-800 border border-dark-700 rounded-xl py-3 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-gold-500 transition gold-glow-focus">
+                                <option value="Makanan & Minuman" selected>🍜 Makanan & Minuman</option>
+                                <option value="Transportasi">🚗 Transportasi</option>
+                                <option value="Belanja">🛒 Belanja</option>
+                                <option value="Hiburan">🎬 Hiburan & Hobi</option>
+                                <option value="Tagihan & Utilitas">⚡ Tagihan & Jasa</option>
+                                <option value="Kesehatan">🏥 Kesehatan</option>
+                                <option value="Pendidikan">📚 Pendidikan</option>
+                                <option value="Lain-lain">✨ Lain-lain</option>
+                            </select>
+                        </div>
+
+                        <!-- Tombol Submit -->
+                        <div class="md:col-span-12 mt-2 flex justify-end">
+                            <button type="submit"
+                                class="bg-gradient-to-r from-gold-600 to-gold-400 text-dark-950 font-bold py-3 px-8 rounded-xl hover:from-gold-500 hover:to-gold-300 transition duration-300 shadow-lg shadow-gold-500/10 flex items-center gap-2 text-sm w-full md:w-auto justify-center">
+                                <i data-lucide="plus" class="w-4.5 h-4.5"></i> Catat Pengeluaran
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Daftar Rincian Pengeluaran -->
+                <div class="bg-dark-900 border border-gold-500/10 rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs uppercase tracking-widest text-gold-400 font-semibold flex items-center gap-2">
+                            <i data-lucide="list" class="w-4 h-4"></i> Rincian Penggunaan Anggaran
+                        </h3>
+                        <span id="expense-count" class="text-[11px] bg-dark-800 border border-dark-700 text-gold-300 px-3 py-1 rounded-full font-medium">0 Pengeluaran</span>
+                    </div>
+
+                    <!-- Filter Kategori & Pencarian -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
+                        <div class="sm:col-span-8 relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </span>
+                            <input type="text" id="search-expense" oninput="filterExpenses()" placeholder="Cari kebutuhan..."
+                                class="w-full bg-dark-800 border border-dark-700 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gold-500 transition">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <select id="filter-category" onchange="filterExpenses()"
+                                class="w-full bg-dark-800 border border-dark-700 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-gold-500 transition">
+                                <option value="All">Semua Kategori</option>
+                                <option value="Makanan & Minuman">Makanan & Minuman</option>
+                                <option value="Transportasi">Transportasi</option>
+                                <option value="Belanja">Belanja</option>
+                                <option value="Hiburan">Hiburan & Hobi</option>
+                                <option value="Tagihan & Utilitas">Tagihan & Jasa</option>
+                                <option value="Kesehatan">Kesehatan</option>
+                                <option value="Pendidikan">Pendidikan</option>
+                                <option value="Lain-lain">Lain-lain</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- List Konten -->
+                    <div class="overflow-hidden">
+                        <div id="empty-expense-state" class="text-center py-12 border border-dashed border-dark-700 rounded-xl">
+                            <div class="w-12 h-12 bg-dark-800 border border-dark-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i data-lucide="clipboard-list" class="w-6 h-6 text-gray-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-400">Belum ada rincian penggunaan anggaran untuk hari ini.</p>
+                            <p class="text-xs text-gray-600 mt-1">Silakan tambahkan pengeluaran baru di atas.</p>
+                        </div>
+
+                        <div id="expense-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-1 no-scrollbar hidden">
+                            <!-- Diisi via Javascript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian Analisis Singkat Kategori Harian -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Persentase Pengeluaran Berdasarkan Kategori -->
+                    <div class="bg-dark-900 border border-gold-500/10 rounded-2xl p-6">
+                        <h4 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-4 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4"></i> Distribusi Kategori
+                        </h4>
+                        <div id="category-distribution" class="space-y-4">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Kalender Navigasi Cepat Bulan Ini -->
+                    <div class="bg-dark-900 border border-gold-500/10 rounded-2xl p-6 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-3 flex items-center gap-2">
+                                <i data-lucide="calendar-days" class="w-4 h-4"></i> Informasi Akun Faye
+                            </h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Sistem mencatat anggaran harian secara terpisah tiap harinya. Anda dapat berpindah ke tanggal manapun di masa lalu atau masa depan untuk mengatur rencana pengeluaran terperinci.
+                            </p>
+                        </div>
+                        <div class="border-t border-dark-800 pt-4 mt-4 flex items-center justify-between text-xs text-gray-400">
+                            <span>Sesi Login: <strong class="text-gold-300">financefay</strong></span>
+                            <span>Aplikasi Aktif</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-950 border-t border-dark-900 py-6 text-center text-xs text-gray-500 relative">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>&copy; 2026 <span class="font-serif gold-text-gradient font-semibold">Faye Budget Management</span>. All Rights Reserved.</p>
+            <p class="text-[10px] text-gray-600 mt-1">Dirancang dengan kemewahan, akurasi, dan fungsionalitas harian.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Aplikasi -->
+    <script>
+        // Data Login Kredensial
+        const CREDENTIALS = {
+            username: "financefay",
+            password: "060301"
+        };
+
+        // State Aplikasi
+        let currentSelectedDate = "";
+        
+        // Memori utama penyimpanan data (Format: { "YYYY-MM-DD": { budget: X, expenses: [...] } })
+        let appDatabase = {};
+
+        // Inisialisasi awal saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set default date ke hari ini
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            currentSelectedDate = `${year}-${month}-${day}`;
+            
+            document.getElementById('app-date-picker').value = currentSelectedDate;
+
+            // Memuat database fiktif / memori jika ada dari localStorage (opsional untuk kegunaan jangka pendek, 
+            // namun menggunakan in-memory state murni sebagai default, kita muat template default saja)
+            seedMockData();
+            
+            // Inisialisasi ikon Lucide
+            lucide.createIcons();
+        });
+
+        // Seed mock data awal agar aplikasi tidak terlihat kosong
+        function seedMockData() {
+            appDatabase[currentSelectedDate] = {
+                budget: 1000000,
+                expenses: [
+                    { id: 1, name: "Makan Restoran Jepang", amount: 250000, category: "Makanan & Minuman" },
+                    { id: 2, name: "Isi Bensin Mobil", amount: 150000, category: "Transportasi" },
+                    { id: 3, name: "Beli Kemeja Baru", amount: 350000, category: "Belanja" }
+                ]
+            };
+
+            // Contoh data kemarin
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yDateStr = yesterday.toISOString().split('T')[0];
+            appDatabase[yDateStr] = {
+                budget: 800000,
+                expenses: [
+                    { id: 4, name: "Belanja Bulanan Supermarket", amount: 450000, category: "Belanja" },
+                    { id: 5, name: "Kopi Sore", amount: 65000, category: "Makanan & Minuman" }
+                ]
+            };
+        }
+
+        // Helper Format Rupiah
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        }
+
+        // Tampilkan Notifikasi Toast Kustom (Bukan alert bawaan browser)
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            
+            let bgClass = "bg-dark-900 border-gold-500/40 text-white";
+            let icon = "info";
+            let iconColor = "text-gold-400";
+            
+            if (type === 'success') {
+                bgClass = "bg-dark-900 border-emerald-500/40 text-white";
+                icon = "check-circle";
+                iconColor = "text-emerald-400";
+            } else if (type === 'error') {
+                bgClass = "bg-dark-900 border-rose-500/40 text-white";
+                icon = "alert-circle";
+                iconColor = "text-rose-400";
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 p-4 rounded-xl border ${bgClass} shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 gold-glow`;
+            
+            toast.innerHTML = `
+                <div class="${iconColor}">
+                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-grow text-xs font-semibold tracking-wide">${message}</div>
+                <button class="text-gray-500 hover:text-white" onclick="this.parentElement.remove()">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Auto Remove setelah 4 detik
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        // Fungsi Login
+        function handleLogin(e) {
+            e.preventDefault();
+            const userIn = document.getElementById('username').value.trim();
+            const passIn = document.getElementById('password').value;
+
+            if (userIn === CREDENTIALS.username && passIn === CREDENTIALS.password) {
+                showNotification("Akses Diterima. Selamat Datang, Fay!", "success");
+                
+                // Animasi Transisi Halus
+                const loginScreen = document.getElementById('login-screen');
+                loginScreen.classList.add('opacity-0', 'scale-95');
+                
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    const mainApp = document.getElementById('main-app');
+                    mainApp.classList.remove('hidden');
+                    mainApp.classList.add('opacity-0');
+                    setTimeout(() => {
+                        mainApp.classList.add('transition-all', 'duration-500', 'opacity-100');
+                    }, 50);
+                    
+                    renderApp();
+                }, 300);
+            } else {
+                showNotification("Kredensial salah. Silakan coba kembali.", "error");
+            }
+        }
+
+        // Fungsi Logout
+        function handleLogout() {
+            showNotification("Sesi telah berakhir. Sampai jumpa kembali.", "info");
+            
+            const mainApp = document.getElementById('main-app');
+            mainApp.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                mainApp.classList.add('hidden');
+                const loginScreen = document.getElementById('login-screen');
+                loginScreen.classList.remove('hidden', 'opacity-0', 'scale-95');
+                
+                // Clear Input
+                document.getElementById('username').value = "";
+                document.getElementById('password').value = "";
+            }, 300);
+        }
+
+        // Mendapatkan atau menginisialisasi objek data untuk tanggal aktif
+        function getOrCreateDayData(dateStr) {
+            if (!appDatabase[dateStr]) {
+                appDatabase[dateStr] = {
+                    budget: 0,
+                    expenses: []
+                };
+            }
+            return appDatabase[dateStr];
+        }
+
+        // Navigasi Mengubah Tanggal via Picker
+        function handleDateChange(e) {
+            currentSelectedDate = e.target.value;
+            if (currentSelectedDate) {
+                renderApp();
+                showNotification(`Tanggal diubah ke: ${formatReadableDate(currentSelectedDate)}`, 'info');
+            }
+        }
+
+        // Navigasi Mengubah Tanggal via Tombol Chevron (+1 / -1 Hari)
+        function adjustDay(direction) {
+            const current = new Date(currentSelectedDate);
+            current.setDate(current.getDate() + direction);
+            
+            const year = current.getFullYear();
+            const month = String(current.getMonth() + 1).padStart(2, '0');
+            const day = String(current.getDate()).padStart(2, '0');
+            
+            currentSelectedDate = `${year}-${month}-${day}`;
+            document.getElementById('app-date-picker').value = currentSelectedDate;
+            
+            renderApp();
+            showNotification(`Tanggal diubah ke: ${formatReadableDate(currentSelectedDate)}`, 'info');
+        }
+
+        // Format tanggal agar ramah dibaca manusia (Contoh: 20 Mei 2026)
+        function formatReadableDate(dateString) {
+            const date = new Date(dateString);
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('id-ID', options);
+        }
+
+        // Mengatur Anggaran Harian
+        function handleSetBudget(e) {
+            e.preventDefault();
+            const amountInput = document.getElementById('input-budget-amount');
+            const newBudget = parseFloat(amountInput.value);
+
+            if (isNaN(newBudget) || newBudget < 0) {
+                showNotification("Masukkan nilai anggaran yang valid.", "error");
+                return;
+            }
+
+            const dayData = getOrCreateDayData(currentSelectedDate);
+            dayData.budget = newBudget;
+
+            renderApp();
+            amountInput.value = "";
+            showNotification(`Anggaran hari ini berhasil diatur sebesar ${formatRupiah(newBudget)}`, "success");
+        }
+
+        // Menambahkan Item Pengeluaran Baru
+        function handleAddExpense(e) {
+            e.preventDefault();
+            
+            const nameInput = document.getElementById('expense-name');
+            const amountInput = document.getElementById('expense-amount');
+            const categorySelect = document.getElementById('expense-category');
+
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const category = categorySelect.value;
+
+            if (!name) {
+                showNotification("Masukkan deskripsi pengeluaran.", "error");
+                return;
+            }
+            if (isNaN(amount) || amount <= 0) {
+                showNotification("Jumlah pengeluaran harus lebih besar dari Rp 0.", "error");
+                return;
+            }
+
+            const dayData = getOrCreateDayData(currentSelectedDate);
+
+            // Validasi over budget warning
+            const currentTotalSpent = dayData.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            if (dayData.budget > 0 && (currentTotalSpent + amount) > dayData.budget) {
+                showNotification("Peringatan: Pengeluaran ini melebihi kapasitas anggaran yang Anda tetapkan!", "error");
+            }
+
+            // Simpan data
+            const newExpense = {
+                id: Date.now(),
+                name,
+                amount,
+                category
+            };
+
+            dayData.expenses.unshift(newExpense); // Tambahkan di bagian atas list
+
+            // Reset form
+            nameInput.value = "";
+            amountInput.value = "";
+            
+            renderApp();
+            showNotification(`Berhasil mencatat pengeluaran "${name}"`, "success");
+        }
+
+        // Menghapus Item Pengeluaran
+        function deleteExpense(id) {
+            const dayData = getOrCreateDayData(currentSelectedDate);
+            const itemIndex = dayData.expenses.findIndex(exp => exp.id === id);
+            
+            if (itemIndex !== -1) {
+                const deletedItemName = dayData.expenses[itemIndex].name;
+                dayData.expenses.splice(itemIndex, 1);
+                renderApp();
+                showNotification(`Berhasil menghapus pengeluaran "${deletedItemName}"`, "info");
+            }
+        }
+
+        // Render Seluruh Aplikasi berdasarkan State Saat Ini
+        function renderApp() {
+            const dayData = getOrCreateDayData(currentSelectedDate);
+
+            // 1. Render Summary Cards
+            const totalBudget = dayData.budget;
+            const totalSpent = dayData.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const remaining = totalBudget - totalSpent;
+
+            document.getElementById('summary-budget').textContent = formatRupiah(totalBudget);
+            document.getElementById('summary-spent').textContent = formatRupiah(totalSpent);
+            
+            const remainingEl = document.getElementById('summary-remaining');
+            remainingEl.textContent = formatRupiah(remaining);
+
+            // Menyesuaikan style container sisa saldo berdasarkan kondisi keuangan
+            const remContainer = document.getElementById('remaining-container');
+            if (remaining < 0) {
+                remContainer.className = "border border-rose-500/30 bg-rose-950/20 rounded-xl p-4 transition-all duration-300";
+                remainingEl.className = "text-2xl font-bold text-rose-400 tracking-wide";
+            } else if (totalBudget === 0) {
+                remContainer.className = "border border-dark-700 bg-dark-800/50 rounded-xl p-4 transition-all duration-300";
+                remainingEl.className = "text-2xl font-bold text-gray-400 tracking-wide";
+            } else {
+                remContainer.className = "border border-gold-500/20 bg-dark-800/50 rounded-xl p-4 transition-all duration-300";
+                remainingEl.className = "text-2xl font-bold text-gold-400 tracking-wide";
+            }
+
+            // 2. Render Progress Bar Anggaran
+            const progressPct = totalBudget > 0 ? Math.min(Math.round((totalSpent / totalBudget) * 100), 100) : 0;
+            const progressPctRaw = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+            document.getElementById('budget-percentage').textContent = `${progressPctRaw}%`;
+            
+            const progressBar = document.getElementById('budget-progress-bar');
+            progressBar.style.width = `${progressPct}%`;
+            
+            // Perubahan warna progres bar jika overload
+            if (progressPctRaw > 100) {
+                progressBar.className = "h-full bg-gradient-to-r from-rose-600 to-rose-400 rounded-full transition-all duration-500";
+            } else {
+                progressBar.className = "h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full transition-all duration-500";
+            }
+
+            // 3. Render List Pengeluaran
+            filterExpenses();
+
+            // 4. Render Distribusi Kategori
+            renderCategoryDistribution(dayData.expenses);
+        }
+
+        // Filter & Cari Pengeluaran, lalu Tampilkan di DOM
+        function filterExpenses() {
+            const dayData = getOrCreateDayData(currentSelectedDate);
+            const query = document.getElementById('search-expense').value.toLowerCase().trim();
+            const selectedCategory = document.getElementById('filter-category').value;
+
+            const listContainer = document.getElementById('expense-list');
+            const emptyState = document.getElementById('empty-expense-state');
+
+            // Lakukan pemfilteran data
+            const filtered = dayData.expenses.filter(exp => {
+                const matchesSearch = exp.name.toLowerCase().includes(query);
+                const matchesCategory = selectedCategory === "All" || exp.category === selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            // Update Label Jumlah Pengeluaran
+            document.getElementById('expense-count').textContent = `${filtered.length} Pengeluaran`;
+
+            if (filtered.length === 0) {
+                listContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                listContainer.classList.remove('hidden');
+                
+                listContainer.innerHTML = "";
+                filtered.forEach(exp => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = "bg-dark-800/60 hover:bg-dark-800 border border-dark-700/80 hover:border-gold-500/25 p-4 rounded-xl flex items-center justify-between transition-all duration-200 group";
+                    
+                    // Icon berdasarkan Kategori
+                    let catIcon = "tag";
+                    if (exp.category === "Makanan & Minuman") catIcon = "coffee";
+                    else if (exp.category === "Transportasi") catIcon = "car";
+                    else if (exp.category === "Belanja") catIcon = "shopping-bag";
+                    else if (exp.category === "Hiburan") catIcon = "film";
+                    else if (exp.category === "Tagihan & Utilitas") catIcon = "credit-card";
+                    else if (exp.category === "Kesehatan") catIcon = "heart-pulse";
+                    else if (exp.category === "Pendidikan") catIcon = "graduation-cap";
+
+                    itemDiv.innerHTML = `
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-10 h-10 bg-dark-700 text-gold-400 rounded-lg flex items-center justify-center border border-dark-600 shrink-0">
+                                <i data-lucide="${catIcon}" class="w-5 h-5"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-semibold text-sm text-white truncate pr-2">${exp.name}</h4>
+                                <span class="text-[10px] uppercase text-gold-400 tracking-wider font-medium">${exp.category}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold text-white tracking-wide shrink-0">${formatRupiah(exp.amount)}</span>
+                            <button onclick="deleteExpense(${exp.id})" 
+                                class="text-gray-500 hover:text-rose-400 p-1.5 hover:bg-dark-700 rounded-lg transition-all"
+                                title="Hapus catatan">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
+
+                // Update Ikon Lucide untuk elemen baru dimasukkan ke DOM
+                lucide.createIcons();
+            }
+        }
+
+        // Render Breakdown Distribusi Pengeluaran Berdasarkan Kategori
+        function renderCategoryDistribution(expenses) {
+            const container = document.getElementById('category-distribution');
+            
+            if (expenses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-xs text-gray-500">
+                        Belum ada distribusi data pengeluaran harian.
+                    </div>
+                `;
+                return;
+            }
+
+            // Hitung total spent & akumulasi per kategori
+            const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const categorySums = {};
+
+            expenses.forEach(exp => {
+                categorySums[exp.category] = (categorySums[exp.category] || 0) + exp.amount;
+            });
+
+            container.innerHTML = "";
+            
+            // Urutkan kategori dari pengeluaran terbesar
+            const sortedCategories = Object.entries(categorySums).sort((a, b) => b[1] - a[1]);
+
+            sortedCategories.forEach(([cat, sum]) => {
+                const percentage = totalSpent > 0 ? Math.round((sum / totalSpent) * 100) : 0;
+                
+                const catItem = document.createElement('div');
+                catItem.className = "space-y-1.5";
+                catItem.innerHTML = `
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-gray-300 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 bg-gold-400 rounded-full"></span>
+                            ${cat}
+                        </span>
+                        <span class="text-gray-400">${formatRupiah(sum)} (${percentage}%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-dark-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gold-500 rounded-full" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                container.appendChild(catItem);
+            });
+        }
+    </script>
+</body>
+</html>
